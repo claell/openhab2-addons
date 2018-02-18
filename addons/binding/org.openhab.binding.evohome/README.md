@@ -2,8 +2,6 @@
 
 This binding connects your to your Honeywell evohome system, similar to what the offical app does. This means that an internet connection is needed. Currently it is possible to set the global system mode and read the values of setpoints and temperatures of individual zones.
 
-
-
 ## Supported Things
 
 The binding supports the following things:
@@ -28,7 +26,6 @@ The heating zone thing represents the evohome heating zone. It displays the curr
 
 After setting up the evohome account, the evotouch and heating zones available to your account will be discovered after a manual scan.
 
-
 ## Binding Configuration
 
 The evohome account needs to be configured with your username and password. Currently, only configuration through PaperUI is tested.
@@ -44,4 +41,3 @@ TBD
 ## Full Example
 
 TBD
-

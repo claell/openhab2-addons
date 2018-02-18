@@ -28,10 +28,9 @@
         <channels>
             <channel id="Temperature" typeId="temperature" />
             <channel id="CurrentSetPoint" typeId="currentsetpoint" />   
-            <channel id="SetPointStatus" typeId="setpointstatus" />   
-            <!-- Removed until we implement setting temperature 
+            <channel id="SetPointStatus" typeId="setpointstatus" />
             <channel id="SetPoint" typeId="setpoint" />   
-            -->
+           
         </channels>
     </thing-type>
 </thing:thing-descriptions>

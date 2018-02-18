@@ -22,6 +22,9 @@ import org.openhab.binding.evohome.internal.api.models.v2.response.ZoneStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+
+
 /**
  * The {@link EvohomeHeatingZoneHandler} is responsible for handling commands, which are
  * sent to one of the channels.
@@ -32,8 +35,8 @@ import org.slf4j.LoggerFactory;
 public class EvohomeHeatingZoneHandler extends BaseEvohomeHandler {
 
     private final Logger logger = LoggerFactory.getLogger(EvohomeHeatingZoneHandler.class);
-
-    private int zoneId;
+    
+    private long setpointLastChanged;
 
     public EvohomeHeatingZoneHandler(Thing thing) {
         super(thing);
@@ -41,7 +44,7 @@ public class EvohomeHeatingZoneHandler extends BaseEvohomeHandler {
 
     @Override
     public void initialize() {
-        updateStatus(ThingStatus.ONLINE);
+        updateStatus(ThingStatus.UNKNOWN);
 
         if(getBridge() != null && getBridge().getHandler() != null){
             EvohomeApiClient apiClient = ((EvohomeGatewayHandler) getBridge().getHandler()).getApiClient();
@@ -65,8 +68,35 @@ public class EvohomeHeatingZoneHandler extends BaseEvohomeHandler {
 
                     updateStatus(ThingStatus.ONLINE);
                 }
+            } else {
+                if (channelUID.getId().equals(EvohomeBindingConstants.SET_POINT_CHANNEL)) {
+                    if( command instanceof DecimalType ) {
+                        setZoneSetpoint( ((DecimalType)command).doubleValue()) ;
+                    }
+                }
             }
+
         }
+    }
+
+    private void setZoneSetpoint(double temp) {
+        EvohomeApiClient apiClient = ((EvohomeGatewayHandler) getBridge().getHandler()).getApiClient();
+        String zoneId = getThing().getProperties().get(EvohomeBindingConstants.ZONE_ID);
+
+        // On EvoHome, when you set the setpoint, it needs to know when you want to switch back
+        // to the schedule. This can be either "permanent override", or until a particular date/time.
+        //
+        // What the phone app does as a default, which seems sensible, is to find out when then next
+        // scheduled change is, and override the setppoint only until then. So to do this we need to
+        // find the next scheduled change, and use that date for the changeover.
+
+        LocalDateTime nextSwitchPoint = apiClient.getSchedule(zoneId).getUpcomingSwitchpointDates().get(0);
+
+        apiClient.setHeatingSetpoint(zoneId, temp, nextSwitchPoint);
+
+        updateState(EvohomeBindingConstants.SET_POINT_CHANNEL, new DecimalType(temp));
+
+        setpointLastChanged = System.currentTimeMillis();
     }
 
     @Override
@@ -95,5 +125,16 @@ public class EvohomeHeatingZoneHandler extends BaseEvohomeHandler {
         updateState(EvohomeBindingConstants.TEMPERATURE_CHANNEL, new DecimalType(temperature));
         updateState(EvohomeBindingConstants.CURRENT_SET_POINT_CHANNEL, new DecimalType(targetTemperature));
         updateState(EvohomeBindingConstants.SET_POINT_STATUS_CHANNEL, new StringType(mode));
+
+        // We want the user setpoint control to sit at what the system believes the setpoint is
+        // for most of the time (I.E: so you can nudge the temperature up and down without clicking
+        // forever). However - we don't want to have a race condition where we keep hitting the up button,
+        // the system then fetches the zone status for some other reason, and we blindly reset the "desired
+        // setpoint". So only change this value if it's over a minute since we last tried to manually change
+        // the setpoint.
+
+        if(setpointLastChanged + 60000 < System.currentTimeMillis() ) {
+            updateState(EvohomeBindingConstants.SET_POINT_CHANNEL, new DecimalType(targetTemperature));
+        }
     }
 }

@@ -8,11 +8,8 @@
  */
 package org.openhab.binding.evohome.internal.api;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -23,8 +20,10 @@ import org.openhab.binding.evohome.internal.api.models.v2.response.Authenticatio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Provides access to (an optionally OAUTH based) API. Makes sure that all the necessary headers are set.
@@ -35,9 +34,8 @@ public class ApiAccess {
     private final Logger logger = LoggerFactory.getLogger(ApiAccess.class);
     private final HttpClient httpClient;
 
-    // TODO remove static?
-    private static Authentication authenticationData;
-    private static String applicationId;
+    private Authentication authenticationData;
+    private String applicationId;
 
     public ApiAccess(HttpClient httpClient){
         this.httpClient = httpClient;
@@ -48,7 +46,7 @@ public class ApiAccess {
      * @param authentication The authentication details to apply
      */
     public void setAuthentication(Authentication authentication) {
-        ApiAccess.authenticationData = authentication;
+        authenticationData = authentication;
     }
 
     /**
@@ -56,7 +54,7 @@ public class ApiAccess {
      * @return The current authentication details
      */
     public Authentication getAuthentication() {
-        return ApiAccess.authenticationData;
+        return authenticationData;
     }
 
     /**
@@ -64,7 +62,7 @@ public class ApiAccess {
      * @param applicationId The application id to apply
      */
     public void setApplicationId(String applicationId) {
-        ApiAccess.applicationId = applicationId;
+        this.applicationId = applicationId;
     }
 
     /**
@@ -98,7 +96,7 @@ public class ApiAccess {
 
             ContentResponse response = request.send();
 
-            logger.debug("Response: {}\n{}\n{}", response.toString(), response.getHeaders().toString(),
+            logger.debug("Response: {}\n{}\n{}", response, response.getHeaders(),
                     response.getContentAsString());
 
             if ((response.getStatus() == HttpStatus.OK_200) || (response.getStatus() == HttpStatus.ACCEPTED_202)) {
@@ -160,7 +158,7 @@ public class ApiAccess {
 
         if (authenticationData != null) {
             if (headers == null) {
-                headers = new HashMap<String, String>();
+                headers = new HashMap<>();
             }
 
             headers.put("Authorization", "bearer " + authenticationData.accessToken);

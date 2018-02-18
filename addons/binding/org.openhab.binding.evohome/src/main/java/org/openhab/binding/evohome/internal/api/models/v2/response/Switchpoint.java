@@ -10,19 +10,20 @@ package org.openhab.binding.evohome.internal.api.models.v2.response;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.List;
+import java.time.LocalTime;
 
 /**
- * Response model for the location status
- * @author Jasper van Zuijlen
- *
+ * Response for switchpoint
+ * @author Nigel Magnay
  */
-public class LocationStatus {
+public class Switchpoint {
+    @SerializedName("temperature")
+    public double temperature;
 
-    @SerializedName("locationId")
-    public String locationId;
+    @SerializedName("timeOfDay")
+    public String timeOfDay;
 
-    @SerializedName("gateways")
-    public List<GatewayStatus> gateways;
-
+    public LocalTime getTime() {
+        return LocalTime.parse(timeOfDay);
+    }
 }

@@ -11,7 +11,10 @@ package org.openhab.binding.evohome.internal.api;
 import org.openhab.binding.evohome.internal.api.models.ControlSystem;
 import org.openhab.binding.evohome.internal.api.models.v1.DataModelResponse;
 import org.openhab.binding.evohome.internal.api.models.v2.response.GatewayStatus;
+import org.openhab.binding.evohome.internal.api.models.v2.response.Schedule;
 import org.openhab.binding.evohome.internal.api.models.v2.response.ZoneStatus;
+
+import java.time.LocalDateTime;
 
 /**
  * Interface for interacting with a specific version of an evohome client. This interface currently supports one account.
@@ -69,4 +72,18 @@ public interface EvohomeApiClient {
      */
     GatewayStatus[] getGateways();
 
+    /**
+     * Sets the Heating Setpoint for a zone.
+     * @param zoneId The ID of the zone to set
+     * @param temperature The temperature for the setpoint
+     * @param until When to set the temperature until, or Null for 'forever'
+     */
+    void setHeatingSetpoint(String zoneId, double temperature, LocalDateTime until);
+
+    /**
+     * Gets the Schedule for a heating zone.
+     * @param zoneId The ID of the Zone
+     * @return The schedule
+     */
+    Schedule getSchedule(String zoneId);
 }

@@ -8,8 +8,6 @@
  */
 package org.openhab.binding.evohome.internal.api.models.v2;
 
-import java.util.ArrayList;
-
 import org.eclipse.jetty.http.HttpMethod;
 import org.openhab.binding.evohome.internal.api.ApiAccess;
 import org.openhab.binding.evohome.internal.api.EvohomeApiConstants;
@@ -18,13 +16,15 @@ import org.openhab.binding.evohome.internal.api.models.v2.request.Mode;
 import org.openhab.binding.evohome.internal.api.models.v2.response.TemperatureControlSystem;
 import org.openhab.binding.evohome.internal.api.models.v2.response.TemperatureControlSystemStatus;
 
+import java.util.ArrayList;
+
 /**
  * Provides access to the evohome control system via the V2 api
  * @author Jasper van Zuijlen
  *
  */
 public class ControlSystemV2 extends BaseControlSystem {
-    private ApiAccess apiAccess = null;
+    private ApiAccess apiAccess;
     private TemperatureControlSystem system;
     private TemperatureControlSystemStatus status;
 
@@ -37,7 +37,7 @@ public class ControlSystemV2 extends BaseControlSystem {
 
     @Override
     public String[] getModes() {
-        ArrayList<String> modes = new ArrayList<String>();
+        ArrayList<String> modes = new ArrayList<>();
 
         for (org.openhab.binding.evohome.internal.api.models.v2.response.Mode mode : system.allowedSystemModes) {
             modes.add(mode.systemMode);

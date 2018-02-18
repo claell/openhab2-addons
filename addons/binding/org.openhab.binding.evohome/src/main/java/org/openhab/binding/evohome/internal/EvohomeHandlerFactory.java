@@ -17,8 +17,6 @@
  */
 package org.openhab.binding.evohome.internal;
 
-import java.util.Hashtable;
-
 import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -31,6 +29,8 @@ import org.openhab.binding.evohome.handler.EvohomeGatewayHandler;
 import org.openhab.binding.evohome.handler.EvohomeHeatingZoneHandler;
 import org.openhab.binding.evohome.handler.EvohomeTemperatureControlSystemHandler;
 import org.osgi.framework.ServiceRegistration;
+
+import java.util.Hashtable;
 
 /**
  * Provides the thing factory for this binding
@@ -67,12 +67,7 @@ public class EvohomeHandlerFactory extends BaseThingHandlerFactory {
         EvohomeDiscoveryService discoveryService = new EvohomeDiscoveryService(evohomeBridgeHandler);
 
         discoveryServiceReg = bundleContext.registerService(DiscoveryService.class.getName(), discoveryService,
-                new Hashtable<String, Object>());
-    }
-
-    @Override
-    public ThingHandler registerHandler(Thing thing) {
-        return super.registerHandler(thing);
+                new Hashtable<>());
     }
 
     @Override

@@ -8,21 +8,10 @@
  */
 package org.openhab.binding.evohome.internal.api.models.v2.response;
 
-import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
-
 /**
- * Response model for the location status
- * @author Jasper van Zuijlen
- *
+ * Response for day component
+ * @author Nigel Magnay
  */
-public class LocationStatus {
-
-    @SerializedName("locationId")
-    public String locationId;
-
-    @SerializedName("gateways")
-    public List<GatewayStatus> gateways;
-
+public enum Day {
+    Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday
 }

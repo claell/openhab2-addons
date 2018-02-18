@@ -7,7 +7,6 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package org.openhab.binding.evohome.handler;
-import java.util.Map;
 
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -18,6 +17,8 @@ import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.evohome.EvohomeBindingConstants;
 import org.openhab.binding.evohome.internal.api.EvohomeApiClient;
 import org.openhab.binding.evohome.internal.api.models.ControlSystem;
+
+import java.util.Map;
 
 /**
  * Handler for a temperature control system. Gets and sets global system mode.
@@ -38,12 +39,9 @@ public class EvohomeTemperatureControlSystemHandler extends BaseEvohomeHandler {
 
     @Override
     public void initialize() {
-       updateStatus(ThingStatus.ONLINE);
+       updateStatus(ThingStatus.UNKNOWN);
     }
 
-    @Override
-    public void dispose() {
-    }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {

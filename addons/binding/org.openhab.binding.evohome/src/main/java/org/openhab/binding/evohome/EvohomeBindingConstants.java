@@ -8,11 +8,10 @@
  */
 package org.openhab.binding.evohome;
 
-import java.util.Set;
-
+import com.google.common.collect.ImmutableSet;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
-import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 
 /**
  * The {@link EvohomeBindingConstants} class defines common constants, which are

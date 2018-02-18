@@ -8,13 +8,6 @@
  */
 package org.openhab.binding.evohome.internal.api;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -23,6 +16,8 @@ import org.openhab.binding.evohome.internal.api.models.ControlSystem;
 import org.openhab.binding.evohome.internal.api.models.v1.DataModelResponse;
 import org.openhab.binding.evohome.internal.api.models.v2.ControlSystemAndStatus;
 import org.openhab.binding.evohome.internal.api.models.v2.ControlSystemV2;
+import org.openhab.binding.evohome.internal.api.models.v2.request.HeatSetPoint;
+import org.openhab.binding.evohome.internal.api.models.v2.request.SetpointMode;
 import org.openhab.binding.evohome.internal.api.models.v2.response.Authentication;
 import org.openhab.binding.evohome.internal.api.models.v2.response.Gateway;
 import org.openhab.binding.evohome.internal.api.models.v2.response.GatewayStatus;
@@ -30,12 +25,21 @@ import org.openhab.binding.evohome.internal.api.models.v2.response.Location;
 import org.openhab.binding.evohome.internal.api.models.v2.response.LocationStatus;
 import org.openhab.binding.evohome.internal.api.models.v2.response.Locations;
 import org.openhab.binding.evohome.internal.api.models.v2.response.LocationsStatus;
+import org.openhab.binding.evohome.internal.api.models.v2.response.Schedule;
 import org.openhab.binding.evohome.internal.api.models.v2.response.TemperatureControlSystem;
 import org.openhab.binding.evohome.internal.api.models.v2.response.TemperatureControlSystemStatus;
 import org.openhab.binding.evohome.internal.api.models.v2.response.UserAccount;
 import org.openhab.binding.evohome.internal.api.models.v2.response.ZoneStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of the evohome client V2 api
@@ -48,8 +52,8 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
     private final SslContextFactory sslContextFactory = new SslContextFactory();
     private final HttpClient httpClient = new HttpClient(sslContextFactory);
 
-    private EvohomeGatewayConfiguration         configuration      = null;
-    private ApiAccess                           apiAccess          = null;
+    private EvohomeGatewayConfiguration         configuration;
+    private ApiAccess                           apiAccess;
     private UserAccount                         useraccount        = null;
     private Locations                           locations          = null;
     private LocationsStatus                     locationsStatus    = null;
@@ -141,7 +145,7 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
        boolean success = authenticateWithUsername();
 
         // If the authentication succeeded, gather the basic intel as well
-        if (success == true) {
+        if (success) {
             useraccount        = requestUserAccount();
             locations          = requestLocations();
             controlSystemCache = populateCache();
@@ -166,9 +170,8 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
                         + "Content-Type=application%2Fx-www-form-urlencoded%3B+charset%3Dutf-8&"
                         + "Connection=Keep-Alive";
 
-        HashMap<String,String> headers = new HashMap<String,String>();
-
-        //TODO base64 encode (app_id:test)
+        HashMap<String,String> headers = new HashMap<>();
+        
         headers.put("Authorization", "Basic YjAxM2FhMjYtOTcyNC00ZGJkLTg4OTctMDQ4YjlhYWRhMjQ5OnRlc3Q=");
         headers.put("Accept", "application/json, application/xml, text/json, text/x-json, text/javascript, text/xml");
 
@@ -226,7 +229,7 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
     }
 
     private Map<String, ControlSystemAndStatus> populateCache() throws NullPointerException {
-        Map<String, ControlSystemAndStatus> map = new HashMap<String, ControlSystemAndStatus>();
+        Map<String, ControlSystemAndStatus> map = new HashMap<>();
 
         // Add metadata to the map
         for (Location location : locations) {
@@ -276,7 +279,7 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
 
     @Override
     public ControlSystem[] getControlSystems() {
-        ArrayList<ControlSystem> result = new ArrayList<ControlSystem>();
+        ArrayList<ControlSystem> result = new ArrayList<>();
         for (ControlSystemAndStatus item : controlSystemCache.values()) {
             result.add(new ControlSystemV2(apiAccess, item.controlSystem, item.controlSystemStatus));
         }
@@ -312,15 +315,39 @@ public class EvohomeApiClientV2 implements EvohomeApiClient {
         return null;
     }
 
+    public void setHeatingSetpoint(String zoneId, double temp, LocalDateTime until) {
+        String url = EvohomeApiConstants.URL_V2_BASE + EvohomeApiConstants.URL_V2_HEAT_SETPOINT;
+
+        url = String.format(url, zoneId);
+        HeatSetPoint setPoint = new HeatSetPoint();
+        setPoint.heatSetpointValue = temp;
+        if( until == null )
+            setPoint.setpointMode = SetpointMode.PermanentOverride;
+        else {
+            setPoint.setpointMode = SetpointMode.TemporaryOverride;
+            setPoint.setTimeUntil(until);
+        }
+
+        apiAccess.doAuthenticatedRequest(HttpMethod.PUT, url, null, setPoint, null);
+
+    }
+
+    public Schedule getSchedule(String zoneId) {
+        String url = EvohomeApiConstants.URL_V2_BASE + EvohomeApiConstants.URL_V2_SCHEDULE;
+
+        url = String.format(url, "temperatureZone", zoneId);
+
+        Schedule out = new Schedule();
+        return apiAccess.doAuthenticatedRequest(HttpMethod.GET, url, null, null, out);
+    }
+
     @Override
     public GatewayStatus[] getGateways() {
-        List<GatewayStatus> gateways = new ArrayList<GatewayStatus>();
+        List<GatewayStatus> gateways = new ArrayList<>();
 
         LocationsStatus myLocationsStatus = getLocationStatus();
         for(LocationStatus myLocationStatus : myLocationsStatus){
-            for(GatewayStatus gatewayStatus : myLocationStatus.gateways){
-                gateways.add(gatewayStatus);
-            }
+            gateways.addAll(myLocationStatus.gateways);
         }
 
         return gateways.toArray(new GatewayStatus[gateways.size()]);
